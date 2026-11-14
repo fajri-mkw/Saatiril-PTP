@@ -27,11 +27,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 12266719
-
+      # SDK sudah preinstalled di runner ubuntu-latest (ANDROID_HOME=/usr/local/lib/android/sdk,
+      # sdkmanager ada di PATH). Action android-actions/setup-android tidak dipakai karena
+      # menjalankan `sdkmanager tools` — paket 'tools' sudah dihapus dari repo Android SDK.
       - name: Install SDK platforms & build-tools
         run: |
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
