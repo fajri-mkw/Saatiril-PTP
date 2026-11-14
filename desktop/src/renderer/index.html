@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Saatiril Desktop</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true">
+      <rect x="12" y="12" width="488" height="488" rx="108" fill="#1a0b2e" stroke="#533485"/>
+      <rect x="172" y="118" width="168" height="72" rx="26" fill="#d4af37"/>
+      <rect x="88" y="168" width="336" height="216" rx="44" fill="#d4af37"/>
+      <circle cx="256" cy="276" r="92" fill="#1a0b2e"/>
+      <circle cx="256" cy="276" r="64" fill="#06b6d4"/>
+      <circle cx="212" cy="232" r="18" fill="#ffffff" opacity=".82"/>
+      <circle cx="394" cy="206" r="10" fill="#06b6d4"/>
+    </svg>
+    <div>
+      <h1>Saatiril Desktop</h1>
+      <p class="sub">DSLR USB PTP Tether — <em>Sistem Auto Track Input, Raw Into Live</em></p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button id="btn-demo" class="btn ghost" title="Coba tanpa kamera: kamera Sony tiruan">🧪 Mode Demo</button>
+  </div>
+</header>
+
+<main>
+  <!-- ── Kartu status ── -->
+  <section class="status-card" id="status-card" data-state="DISCONNECTED">
+    <div class="status-dot" id="status-dot"></div>
+    <div class="status-text">
+      <div class="state-label" id="state-label">Kamera tidak terdeteksi</div>
+      <div class="state-msg" id="state-msg">Tancapkan kamera DSLR (Sony/Canon/Nikon/Fujifilm) dengan kabel USB, nyalakan, lalu tekan <b>Hubungkan</b>.</div>
+      <div class="state-hint" id="state-hint" hidden></div>
+    </div>
+    <div class="status-actions">
+      <button id="btn-connect" class="btn primary">Hubungkan</button>
+      <button id="btn-disconnect" class="btn ghost" hidden>Putuskan</button>
+    </div>
+  </section>
+
+  <!-- ── Kontrol utama ── -->
+  <section class="grid">
+    <div class="panel capture-panel">
+      <h2>Remote Shutter</h2>
+      <p class="hint">Sony: half-press AF → full-press (timeout 25 dtk). Tombol ini memicu shutter kamera langsung dari layar.</p>
+      <button id="btn-capture" class="shutter" disabled>
+        <span class="shutter-ring"></span>
+        <span class="shutter-label">AMBIL FOTO</span>
+      </button>
+      <div class="cam-label" id="cam-label">—</div>
+      <div class="folder-row">
+        <span class="folder-path" id="folder-path">…</span>
+        <button id="btn-folder" class="btn ghost small">Ganti Folder</button>
+        <button id="btn-open-folder" class="btn ghost small">Buka</button>
+      </div>
+    </div>
+
+    <div class="panel stats-panel">
+      <h2>Statistik</h2>
+      <div class="stats">
+        <div class="stat"><span class="stat-num" id="stat-photos">0</span><span class="stat-name">Foto masuk</span></div>
+        <div class="stat"><span class="stat-num" id="stat-mb">0.0</span><span class="stat-name">MB diterima</span></div>
+        <div class="stat"><span class="stat-num" id="stat-last">—</span><span class="stat-name">Terakhir</span></div>
+      </div>
+      <p class="hint">Setiap foto yang diambil — baik via tombol di layar maupun shutter fisik di body kamera — otomatis terdownload dan tersimpan.</p>
+    </div>
+  </section>
+
+  <!-- ── Galeri ── -->
+  <section class="panel gallery-panel">
+    <h2>Foto Tersimpan</h2>
+    <div class="gallery" id="gallery">
+      <div class="empty" id="gallery-empty">Belum ada foto. Tekan <b>AMBIL FOTO</b> atau tombol shutter di kamera.</div>
+    </div>
+  </section>
+
+  <!-- ── Log ── -->
+  <section class="panel log-panel">
+    <h2>Aktivitas</h2>
+    <div class="log" id="log"></div>
+  </section>
+</main>
+
+<footer>
+  <span>Saatiril Desktop v1.1.0 — paritas perilaku dengan Saatiril Andro (PTPCameraManager)</span>
+</footer>
+
+<script src="renderer.js"></script>
+</body>
+</html>

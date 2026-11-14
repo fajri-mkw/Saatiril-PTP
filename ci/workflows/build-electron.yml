@@ -1,0 +1,118 @@
+name: Build Electron Desktop
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+# GITHUB_TOKEN dipakai untuk upload aset release
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            targets: '--win nsis portable'
+          - os: ubuntu-latest
+            targets: '--linux AppImage'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: desktop
+        run: npx tsc -p tsconfig.json
+
+      - name: Smoke test (engine pipeline tanpa hardware)
+        working-directory: desktop
+        run: node smoke-test.js
+
+      - name: Package (electron-builder)
+        working-directory: desktop
+        env:
+          # pakai prebuild NAPI dari paket usb — tidak perlu rebuild libusb
+          # (npmRebuild:false sudah diset di package.json build config)
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder ${{ matrix.targets }} --publish never
+
+      - name: Collect artifacts
+        working-directory: desktop
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # Windows: saatiril-setup.exe + saatiril-portable.exe
+          # Linux: saatiril-linux.AppImage
+          find dist-app -maxdepth 1 -name "*.exe" -exec cp {} artifacts/ \; 2>/dev/null || true
+          find dist-app -maxdepth 1 -name "*.AppImage" -exec cp {} artifacts/ \; 2>/dev/null || true
+          ls -lh artifacts/
+
+      - name: Upload artifact (CI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: saatiril-desktop-${{ runner.os }}
+          path: desktop/artifacts/*
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish to GitHub Releases (branch push → 'latest')
+        if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd desktop
+          # nama aset Windows & Linux berbeda — upload semua yang ada
+          ASSETS=$(find artifacts -type f | tr '\n' ' ')
+          if [ -z "$ASSETS" ]; then
+            echo "Tidak ada aset — skip"
+            exit 0
+          fi
+          echo "Assets to publish: $ASSETS"
+          gh release create latest \
+            --title "Saatiril PTP - Latest Build" \
+            --notes "Auto-build from commit ${GITHUB_SHA::7}" \
+            --prerelease --target main $ASSETS 2>/tmp/create.err || true
+          if grep -q "already exists" /tmp/create.err 2>/dev/null; then
+            gh release upload latest $ASSETS --clobber
+          else
+            cat /tmp/create.err 2>/dev/null || true
+            gh release upload latest $ASSETS --clobber 2>/dev/null || true
+          fi
+
+      - name: Publish to GitHub Releases (tag → release permanen)
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd desktop
+          TAG="${GITHUB_REF#refs/tags/}"
+          ASSETS=$(find artifacts -type f | tr '\n' ' ')
+          if [ -z "$ASSETS" ]; then
+            echo "Tidak ada aset — skip"
+            exit 0
+          fi
+          gh release create "$TAG" \
+            --title "Saatiril PTP $TAG" \
+            --notes "Desktop build $TAG — Saatiril Desktop (Electron). Commit ${GITHUB_SHA::7}" \
+            $ASSETS || true

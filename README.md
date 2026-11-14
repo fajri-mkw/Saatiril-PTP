@@ -1,21 +1,26 @@
 # Saatiril PTP
 
 [![Build Android APK](https://github.com/fajri-mkw/Saatiril-PTP/actions/workflows/build-android.yml/badge.svg)](https://github.com/fajri-mkw/Saatiril-PTP/actions/workflows/build-android.yml)
+[![Build Electron Desktop](https://github.com/fajri-mkw/Saatiril-PTP/actions/workflows/build-electron.yml/badge.svg)](https://github.com/fajri-mkw/Saatiril-PTP/actions/workflows/build-electron.yml)
 [![Electron PTP Module](https://github.com/fajri-mkw/Saatiril-PTP/actions/workflows/electron-ptp.yml/badge.svg)](https://github.com/fajri-mkw/Saatiril-PTP/actions/workflows/electron-ptp.yml)
 
 **DSLR USB PTP tether untuk SAATIRIL** — *Sistem Auto Track Input, Raw Into Live* —
 sistem manajemen fotografi wisuda real-time berbasis LAN.
 
-Repo ini berisi dua komponen saling melengkapi:
+Repo ini berisi tiga komponen saling melengkapi:
 
 1. **`app/` — Saatiril Andro (Android, Kotlin/Compose)**: aplikasi Android lengkap
    (Admin + MC + Operator dalam satu APK) dengan tether DSLR via kabel USB
    (`PTPCameraManager.kt`), capture card HDMI UVC, hand-trigger MediaPipe,
    dan klien Socket.io LAN.
-2. **`electron-ptp/` — Modul PTP untuk saatiril-operator-electron (TypeScript)**:
-   port 1:1 dari `PTPCameraManager.kt` agar versi Electron/Windows juga bisa
-   tether DSLR (Sony PC Remote, Canon/Nikon PTP, Fujifilm Tether) — diuji
-   21 assertion end-to-end dengan mock kamera Sony, tanpa hardware.
+2. **`electron-ptp/` — Modul PTP untuk Electron (TypeScript)**: port 1:1 dari
+   `PTPCameraManager.kt` agar versi Electron/Windows juga bisa tether DSLR
+   (Sony PC Remote, Canon/Nikon PTP, Fujifilm Tether) — diuji 21 assertion
+   end-to-end dengan mock kamera Sony, tanpa hardware.
+3. **`desktop/` — Saatiril Desktop (Electron)**: aplikasi tether lengkap dengan
+   UI (status kamera, remote shutter, galeri, log aktivitas), auto-save foto,
+   mode demo tanpa kamera, dan packaging installer + portable + AppImage.
+   Lihat [`desktop/README.md`](desktop/README.md).
 
 ## What it does
 
@@ -94,8 +99,11 @@ app/src/main/java/com/saatiril/andro/
 
 | Saluran | Link | Isi |
 |---|---|---|
-| **Latest (update tiap push)** | [`releases/download/latest/saatiril-andro.apk`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-andro.apk) | APK release (R8, 32 MB) — **link ini tidak pernah berubah, isinya selalu build terbaru** |
-| Latest — debug | [`releases/download/latest/saatiril-andro-debug.apk`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-andro-debug.apk) | APK debug (50 MB) |
+| **Android APK (utama)** | [`releases/download/latest/saatiril-andro.apk`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-andro.apk) | APK release (R8, 32 MB) — link ini tidak pernah berubah, isinya selalu build terbaru |
+| Android debug | [`releases/download/latest/saatiril-andro-debug.apk`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-andro-debug.apk) | APK debug (50 MB) |
+| **Desktop installer Windows** | [`releases/download/latest/saatiril-setup.exe`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-setup.exe) | Saatiril Desktop — installer (NSIS) |
+| **Desktop portable Windows** | [`releases/download/latest/saatiril-portable.exe`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-portable.exe) | Saatiril Desktop — **portable, tanpa instalasi** |
+| Desktop Linux | [`releases/download/latest/saatiril-linux.AppImage`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-linux.AppImage) | AppImage (chmod +x lalu jalankan) |
 | Rilis resmi | [`releases/latest`](https://github.com/fajri-mkw/Saatiril-PTP/releases/latest) | Rilis bertag `v*` terbaru |
 | Semua rilis | [`releases`](https://github.com/fajri-mkw/Saatiril-PTP/releases) | Riwayat semua versi |
 
@@ -171,11 +179,14 @@ to achieve full parity with the Electron/Windows desktop application.
 
 ## CI / GitHub Actions
 
-Kedua workflow sudah **aktif** di [`.github/workflows/`](.github/workflows/)
+Ketiga workflow sudah **aktif** di [`.github/workflows/`](.github/workflows/)
 (salinan arsip di [`ci/workflows/`](ci/workflows/)):
 
 - **`build-android.yml`** — unit test JVM → build APK debug+release → publish.
   Push ke `main` menimpa aset di release [`latest`](https://github.com/fajri-mkw/Saatiril-PTP/releases/tag/latest)
   beserta catatan rilis otomatisnya; tag `v*` membuat release permanen.
+- **`build-electron.yml`** — build aplikasi **Saatiril Desktop** (Electron):
+  Windows → `saatiril-setup.exe` + `saatiril-portable.exe`, Linux →
+  `saatiril-linux.AppImage`. Smoke test 48 assertion setiap build.
 - **`electron-ptp.yml`** — build + 21 test mock modul `electron-ptp`, matrix
   Ubuntu + Windows.
