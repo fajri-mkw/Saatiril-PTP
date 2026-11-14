@@ -42,6 +42,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.lifecycle.LifecycleOwner
+import com.saatiril.andro.camera.PTPCameraManager
+import com.saatiril.andro.camera.PtpState
+import com.saatiril.andro.camera.statusMessage
 import com.saatiril.andro.camera.HandTriggerDetector
 import com.saatiril.andro.data.*
 import com.saatiril.andro.ui.gridline.GridlineOverlay
@@ -315,7 +318,6 @@ fun OperatorScreen(
                         val ptpState by viewModel.cameraPTPManager.state.collectAsState()
                         val ptpLabel by viewModel.cameraPTPManager.cameraLabel.collectAsState()
                         val ingested by viewModel.cameraPTPManager.ingestedCount.collectAsState()
-                        val ptp = com.saatiril.andro.camera.PTPCameraManager
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -327,8 +329,8 @@ fun OperatorScreen(
                                 Icons.Default.PhotoCamera,
                                 contentDescription = null,
                                 tint = when (ptpState) {
-                                    ptp.PtpState.READY -> Color(0xFF4ade80)
-                                    ptp.PtpState.ERROR, ptp.PtpState.WRONG_MODE -> Color(0xFFf87171)
+                                    PtpState.READY -> Color(0xFF4ade80)
+                                    PtpState.ERROR, PtpState.WRONG_MODE -> Color(0xFFf87171)
                                     else -> GOLD
                                 },
                                 modifier = Modifier.size(56.dp)
@@ -336,14 +338,14 @@ fun OperatorScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 when (ptpState) {
-                                    ptp.PtpState.READY ->
+                                    PtpState.READY ->
                                         if (ptpLabel.isNotBlank()) ptpLabel else "Kamera DSLR Terhubung"
-                                    else -> ptp.statusMessage(ptpState)
+                                    else -> statusMessage(ptpState)
                                 },
                                 style = TextStyle(color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold),
                                 textAlign = TextAlign.Center
                             )
-                            if (ptpState == ptp.PtpState.READY) {
+                            if (ptpState == PtpState.READY) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     if (ingested > 0) "Mode: PC Remote / Tether • $ingested foto masuk otomatis"
@@ -359,10 +361,10 @@ fun OperatorScreen(
                             }
                             // Mode USB salah → tampilkan petunjuk per-merek (tutorial Satset):
                             // Sony 'PC Remote', Canon & Nikon 'PTP'/Wi-Fi OFF, Fujifilm 'USB Tether Shooting Auto'
-                            if (ptpState == ptp.PtpState.WRONG_MODE) {
+                            if (ptpState == PtpState.WRONG_MODE) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    ptp.usbModeHint(1356),
+                                    PTPCameraManager.usbModeHint(1356),
                                     style = TextStyle(color = Color(0xFFfbbf24), fontSize = 12.sp),
                                     textAlign = TextAlign.Center
                                 )

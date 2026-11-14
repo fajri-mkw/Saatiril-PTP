@@ -11,6 +11,7 @@ import com.saatiril.andro.camera.Camera2Manager
 import com.saatiril.andro.camera.CameraCapture
 import com.saatiril.andro.camera.HandTriggerDetector
 import com.saatiril.andro.camera.PTPCameraManager
+import com.saatiril.andro.camera.PtpState
 import com.saatiril.andro.camera.UVCCameraManager
 import com.saatiril.andro.util.FilenameUtils
 import kotlinx.coroutines.Job
@@ -316,7 +317,7 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
             ptpStateCollector = viewModelScope.launch {
                 cameraPTPManager.state.collect { st ->
                     Log.i(TAG, "PTP state: $st")
-                    if (_activeCameraEngine.value == "ptp" || st == PTPCameraManager.PtpState.READY) {
+                    if (_activeCameraEngine.value == "ptp" || st == PtpState.READY) {
                         updateCameraSource()
                     }
                     refreshAvailableCameras()
@@ -398,7 +399,7 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun updateCameraSource() {
-        val ptpReady = cameraPTPManager.state.value == PTPCameraManager.PtpState.READY
+        val ptpReady = cameraPTPManager.state.value == PtpState.READY
         val uvcConnected = cameraUVCManager.isConnected.value
         val cameraType = cameraUVCManager.cameraType.value
         val isUSB = cameraUVCManager.isUSBCamera.value

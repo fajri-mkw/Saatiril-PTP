@@ -161,26 +161,6 @@ class PTPCameraManager(private val context: Context) {
     // Public state (paritas dengan UVCCameraManager / Camera2Manager)
     // ═══════════════════════════════════════════════════════════
 
-    enum class PtpState {
-        DISCONNECTED,   // tidak ada kamera
-        DETECTED,       // kamera terpasang, belum minta izin
-        CONNECTING,     // sesi PTP sedang dibuka
-        READY,          // tether aktif — ingestion berjalan
-        WRONG_MODE,     // kamera nyala sebagai Mass Storage dsb. — mode USB harus diganti
-        ERROR           // gagal setelah retry
-    }
-
-    /** Pesan status human-friendly untuk kartu tether (meniru SatsetMobile). */
-    fun statusMessage(st: PtpState): String = when (st) {
-        PtpState.DISCONNECTED -> "Kamera tidak terdeteksi — tancapkan kabel OTG & nyalakan kamera"
-        PtpState.DETECTED -> "Menunggu izin USB…"
-        PtpState.CONNECTING -> "Menghubungkan kamera…"
-        PtpState.READY -> "Terhubung — Mode Tether"
-        PtpState.WRONG_MODE ->
-            "Mode USB kamera salah. Di menu kamera, set USB Connection ke 'PC Remote' / 'PTP' / 'Tether'."
-        PtpState.ERROR -> "Gagal terhubung — cek kabel & coba sambung ulang"
-    }
-
     private val _state = MutableStateFlow(PtpState.DISCONNECTED)
     val state: StateFlow<PtpState> = _state.asStateFlow()
 
@@ -1229,7 +1209,7 @@ class PTPCameraManager(private val context: Context) {
                         epIn = ep
                     ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK && ep.direction == UsbConstants.USB_DIR_OUT && epOut == null ->
                         epOut = ep
-                    ep.type == UsbConstants.USB_ENDPOINT_XFER_INTERRUPT && ep.direction == UsbConstants.USB_DIR_IN && epInterrupt == null ->
+                    ep.type == UsbConstants.USB_ENDPOINT_XFER_INT && ep.direction == UsbConstants.USB_DIR_IN && epInterrupt == null ->
                         epInterrupt = ep
                 }
             }
@@ -1420,4 +1400,28 @@ class PTPCameraManager(private val context: Context) {
                 ((b[off + 2].toInt() and 0xFF) shl 16) or
                 ((b[off + 3].toInt() and 0xFF) shl 24)
     }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Enum top-level — bisa diakses dari semua file tanpa instance:
+//   PtpState.READY, statusMessage(st), usbModeHint(vid)
+// ═══════════════════════════════════════════════════════════
+enum class PtpState {
+    DISCONNECTED,   // tidak ada kamera
+    DETECTED,       // kamera terpasang, belum minta izin
+    CONNECTING,     // sesi PTP sedang dibuka
+    READY,          // tether aktif — ingestion berjalan
+    WRONG_MODE,     // kamera nyala sebagai Mass Storage dsb. — mode USB harus diganti
+    ERROR           // gagal setelah retry
+}
+
+/** Pesan status human-friendly untuk kartu tether (meniru SatsetMobile). */
+fun statusMessage(st: PtpState): String = when (st) {
+    PtpState.DISCONNECTED -> "Kamera tidak terdeteksi — tancapkan kabel OTG & nyalakan kamera"
+    PtpState.DETECTED -> "Menunggu izin USB…"
+    PtpState.CONNECTING -> "Menghubungkan kamera…"
+    PtpState.READY -> "Terhubung — Mode Tether"
+    PtpState.WRONG_MODE ->
+        "Mode USB kamera salah. Di menu kamera, set USB Connection ke 'PC Remote' / 'PTP' / 'Tether'."
+    PtpState.ERROR -> "Gagal terhubung — cek kabel & coba sambung ulang"
 }
