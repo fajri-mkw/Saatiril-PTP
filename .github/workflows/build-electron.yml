@@ -112,7 +112,15 @@ jobs:
             echo "Tidak ada aset — skip"
             exit 0
           fi
+          # Tahan race dengan workflow Android yang juga membuat release tag sama
           gh release create "$TAG" \
             --title "Saatiril PTP $TAG" \
             --notes "Desktop build $TAG — Saatiril Desktop (Electron). Commit ${GITHUB_SHA::7}" \
-            $ASSETS || true
+            $ASSETS 2>/tmp/tag-create.err || true
+          if grep -qi "already exists" /tmp/tag-create.err 2>/dev/null; then
+            echo "Release $TAG sudah ada (dibuat workflow lain) — upload aset"
+            gh release upload "$TAG" $ASSETS --clobber
+          elif [ -s /tmp/tag-create.err ]; then
+            cat /tmp/tag-create.err
+            exit 1
+          fi

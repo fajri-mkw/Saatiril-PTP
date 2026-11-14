@@ -190,7 +190,17 @@ jobs:
             echo "Build terbaru di antara rilis resmi: [release \`latest\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/latest) — [unduh APK release](https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/saatiril-andro.apk)."
           } > "$NOTES_FILE"
 
+          # Tahan race dengan workflow lain (Electron) yang juga membuat release tag
+          # yang sama secara paralel: bila sudah ada, upload saja asetnya.
           gh release create "$TAG" \
             --title "Saatiril PTP $TAG" \
             --notes-file "$NOTES_FILE" \
-            $ASSETS
+            $ASSETS 2>/tmp/tag-create.err || true
+          if grep -qi "already exists" /tmp/tag-create.err 2>/dev/null; then
+            echo "Release $TAG sudah ada (dibuat workflow lain) — upload aset + update catatan"
+            gh release upload "$TAG" $ASSETS --clobber
+            gh release edit "$TAG" --notes-file "$NOTES_FILE" || true
+          elif [ -s /tmp/tag-create.err ]; then
+            cat /tmp/tag-create.err
+            exit 1
+          fi
