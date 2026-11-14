@@ -32,6 +32,9 @@ jobs:
       # menjalankan `sdkmanager tools` — paket 'tools' sudah dihapus dari repo Android SDK.
       - name: Install SDK platforms & build-tools
         run: |
+          # sdkmanager tidak otomatis di PATH runner — pakai full path preinstalled
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+          command -v sdkmanager || ls "$ANDROID_HOME/cmdline-tools/"
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
