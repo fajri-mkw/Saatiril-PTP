@@ -177,8 +177,7 @@ jobs:
           {
             echo "## Saatiril PTP ${TAG}"
             echo
-            echo "DSLR USB PTP tether untuk SAATIRIL — build ${GITHUB_SHA::7} \
-(\`$(git log -1 --pretty=%s)\`)."
+            echo "DSLR USB PTP tether untuk SAATIRIL — build ${GITHUB_SHA::7} (\`$(git log -1 --pretty=%s)\`)."
             echo
             echo "### Checksum (SHA-256)"
             echo
@@ -188,8 +187,7 @@ jobs:
             echo
             echo "---"
             echo
-            echo "Build terbaru di antara rilis resmi: [release \`latest\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/latest) \
-— [unduh APK release](https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/saatiril-andro.apk)."
+            echo "Build terbaru di antara rilis resmi: [release \`latest\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/latest) — [unduh APK release](https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/saatiril-andro.apk)."
           } > "$NOTES_FILE"
 
           gh release create "$TAG" \
