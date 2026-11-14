@@ -88,6 +88,22 @@ app/src/main/java/com/saatiril/andro/
     └── Sha256.kt
 ```
 
+## Unduh / Rilis
+
+**Link unduh permanen — selalu build terbaru setiap ada update:**
+
+| Saluran | Link | Isi |
+|---|---|---|
+| **Latest (update tiap push)** | [`releases/download/latest/saatiril-andro.apk`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-andro.apk) | APK release (R8, 32 MB) — **link ini tidak pernah berubah, isinya selalu build terbaru** |
+| Latest — debug | [`releases/download/latest/saatiril-andro-debug.apk`](https://github.com/fajri-mkw/Saatiril-PTP/releases/download/latest/saatiril-andro-debug.apk) | APK debug (50 MB) |
+| Rilis resmi | [`releases/latest`](https://github.com/fajri-mkw/Saatiril-PTP/releases/latest) | Rilis bertag `v*` terbaru |
+| Semua rilis | [`releases`](https://github.com/fajri-mkw/Saatiril-PTP/releases) | Riwayat semua versi |
+
+Mekanisme update: setiap push ke `main` otomatis mem-build APK dan **menimpa aset
+di release `latest`** (`--clobber`) serta memperbarui catatan rilisnya (daftar
+commit sejak tag terakhir + checksum SHA-256). Rilis bertag `v*` bersifat
+permanen dan tidak pernah ditimpa.
+
 ## Build
 
 Requirements: JDK 17, Android SDK 34, Kotlin 1.9.22, AGP 8.2.2.
@@ -155,7 +171,11 @@ to achieve full parity with the Electron/Windows desktop application.
 
 ## CI / GitHub Actions
 
-Workflow CI lengkap tersimpan di [`ci/workflows/`](ci/workflows/) —
-[**aktifkan sekali via Web UI atau token ber-scope `workflow`**](ci/README.md)
-(setelah aktif, push biasa tidak lagi butuh scope tersebut). Setelah aktif:
-push ke `main` mem-build APK & release `latest`; tag `v*` membuat release permanen.
+Kedua workflow sudah **aktif** di [`.github/workflows/`](.github/workflows/)
+(salinan arsip di [`ci/workflows/`](ci/workflows/)):
+
+- **`build-android.yml`** — unit test JVM → build APK debug+release → publish.
+  Push ke `main` menimpa aset di release [`latest`](https://github.com/fajri-mkw/Saatiril-PTP/releases/tag/latest)
+  beserta catatan rilis otomatisnya; tag `v*` membuat release permanen.
+- **`electron-ptp.yml`** — build + 21 test mock modul `electron-ptp`, matrix
+  Ubuntu + Windows.

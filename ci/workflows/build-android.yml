@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history → daftar commit di catatan rilis otomatis
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -105,14 +107,51 @@ jobs:
           fi
           echo "Assets to publish: $ASSETS"
 
+          # --- Catatan rilis otomatis: commit terbaru + checksum ---
+          BUILD_DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+          NOTES_FILE=/tmp/release-notes.md
+          {
+            echo "## Build otomatis — ${GITHUB_SHA::7}"
+            echo
+            echo "- **Waktu build**: ${BUILD_DATE}"
+            echo "- **Commit**: [\`${GITHUB_SHA::7}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}) — $(git log -1 --pretty=%s)"
+            echo
+            echo "### Commit sejak rilis tag terakhir"
+            echo
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+            if [ -n "$LAST_TAG" ]; then
+              echo "\`\`\`"
+              git log --oneline "${LAST_TAG}..HEAD" | head -15
+              echo "\`\`\`"
+            else
+              echo "\`\`\`"
+              git log --oneline | head -15
+              echo "\`\`\`"
+            fi
+            echo
+            echo "### Checksum (SHA-256)"
+            echo
+            echo "\`\`\`"
+            (cd artifacts && sha256sum *.apk)
+            echo "\`\`\`"
+            echo
+            echo "---"
+            echo
+            echo "**Link unduh permanen** (selalu build terbaru setiap ada update):"
+            echo
+            echo "- [\`saatiril-andro.apk\`](https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/saatiril-andro.apk) — release (R8, lebih kecil)"
+            echo "- [\`saatiril-andro-debug.apk\`](https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/saatiril-andro-debug.apk) — debug"
+          } > "$NOTES_FILE"
+
           gh release create latest \
             --title "Saatiril PTP - Latest Build" \
-            --notes "Auto-built APK from commit ${GITHUB_SHA::7}" \
+            --notes-file "$NOTES_FILE" \
             --prerelease --target main $ASSETS 2>/tmp/create.err || true
 
           if grep -q "already exists" /tmp/create.err 2>/dev/null; then
-            echo "Release 'latest' sudah ada — upload aset dengan --clobber"
+            echo "Release 'latest' sudah ada — upload aset dengan --clobber + update catatan"
             gh release upload latest $ASSETS --clobber
+            gh release edit latest --notes-file "$NOTES_FILE" || true
           else
             cat /tmp/create.err 2>/dev/null || true
             gh release upload latest $ASSETS --clobber 2>/dev/null || true
@@ -134,7 +173,26 @@ jobs:
             ASSETS="artifacts/saatiril-andro-debug.apk"
           fi
 
+          NOTES_FILE=/tmp/release-notes.md
+          {
+            echo "## Saatiril PTP ${TAG}"
+            echo
+            echo "DSLR USB PTP tether untuk SAATIRIL — build ${GITHUB_SHA::7} \
+(\`$(git log -1 --pretty=%s)\`)."
+            echo
+            echo "### Checksum (SHA-256)"
+            echo
+            echo "\`\`\`"
+            (cd artifacts && sha256sum *.apk)
+            echo "\`\`\`"
+            echo
+            echo "---"
+            echo
+            echo "Build terbaru di antara rilis resmi: [release \`latest\`](https://github.com/${GITHUB_REPOSITORY}/releases/tag/latest) \
+— [unduh APK release](https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/saatiril-andro.apk)."
+          } > "$NOTES_FILE"
+
           gh release create "$TAG" \
             --title "Saatiril PTP $TAG" \
-            --notes "Release $TAG — DSLR USB PTP tether (Android + Electron). Commit ${GITHUB_SHA::7}" \
+            --notes-file "$NOTES_FILE" \
             $ASSETS
