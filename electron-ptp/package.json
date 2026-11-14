@@ -1,0 +1,31 @@
+{
+  "name": "saatiril-electron-ptp",
+  "version": "1.0.0",
+  "description": "DSLR USB PTP tether (Sony PC Remote, Canon/Nikon PTP, Fujifilm Tether) untuk saatiril-operator-electron — port PTPCameraManager.kt dari Saatiril-Andro",
+  "main": "dist/ipc.js",
+  "types": "dist/ipc.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.examples.json",
+    "test": "tsc -p tsconfig.test.json && node dist-test/test/engine.test.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "ptp",
+    "usb",
+    "tether",
+    "sony",
+    "dslr",
+    "electron",
+    "saatiril"
+  ],
+  "license": "MIT",
+  "optionalDependencies": {
+    "usb": "^2.14.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/node": "^26.6.6"
+  }
+}

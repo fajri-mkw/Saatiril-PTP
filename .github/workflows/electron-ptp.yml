@@ -1,0 +1,53 @@
+name: Electron PTP Module
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Typecheck + Mock PTP test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux = cepat/murah; windows = target produksi (driver WinUSB/Zadig).
+        os: [ ubuntu-latest, windows-latest ]
+        node: [ 20 ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: electron-ptp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: electron-ptp
+        run: npm ci
+
+      - name: Build (core + examples)
+        working-directory: electron-ptp
+        run: npm run build
+
+      - name: Test PTP engine dengan mock Sony (21 assertion)
+        working-directory: electron-ptp
+        run: npm test
+
+      - name: Verifikasi paket usb ter-install (production backend)
+        working-directory: electron-ptp
+        shell: bash
+        run: |
+          # `usb` adalah optionalDependencies — modul tetap berfungsi tanpanya
+          # (require dinamis), tapi di CI kita pastikan terpasang agar linkage
+          # libusb teruji di kedua OS.
+          npm install --no-save usb@^2 2>&1 | tail -2
+          node -e "const u=require('usb'); console.log('usb OK, libusb cap:', typeof u.libusb ?? 'n/a')"

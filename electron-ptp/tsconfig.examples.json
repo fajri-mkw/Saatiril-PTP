@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-examples",
+    "rootDir": ".",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "types": [
+      "node"
+    ],
+    "declaration": false,
+    "paths": {
+      "electron": [
+        "../examples/electron-stub.d.ts"
+      ]
+    },
+    "baseUrl": "."
+  },
+  "include": [
+    "examples/**/*",
+    "src/**/*"
+  ]
+}
