@@ -152,3 +152,10 @@ Prioritas kamera: **DSLR kabel USB (PTP) → capture card (UVC) → kamera HP
 Built on top of the hardened `android-operator` v35 camera stack from the
 Saatiril-Fullset repository, extended with native MC and Admin Compose panels
 to achieve full parity with the Electron/Windows desktop application.
+
+## CI / GitHub Actions
+
+Workflow CI lengkap tersimpan di [`ci/workflows/`](ci/workflows/) —
+[**aktifkan sekali via Web UI atau token ber-scope `workflow`**](ci/README.md)
+(setelah aktif, push biasa tidak lagi butuh scope tersebut). Setelah aktif:
+push ke `main` mem-build APK & release `latest`; tag `v*` membuat release permanen.
