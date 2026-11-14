@@ -3,6 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   workflow_dispatch:
 
 # Default GITHUB_TOKEN needs explicit write permission to create releases
@@ -27,13 +28,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 12266719
-
+      # SDK sudah preinstalled di runner ubuntu-latest (ANDROID_HOME=/usr/local/lib/android/sdk,
+      # sdkmanager ada di PATH). Action android-actions/setup-android tidak dipakai karena
+      # menjalankan `sdkmanager tools` — paket 'tools' sudah dihapus dari repo Android SDK.
       - name: Install SDK platforms & build-tools
         run: |
+          # sdkmanager tidak otomatis di PATH runner — pakai full path preinstalled
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+          command -v sdkmanager || ls "$ANDROID_HOME/cmdline-tools/"
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
