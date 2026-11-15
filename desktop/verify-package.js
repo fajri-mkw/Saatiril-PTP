@@ -64,8 +64,16 @@ function main() {
   const asar = loadAsar();
 
   console.log('\n[1] File kunci ada di dalam asar');
-  const list = asar.listPackage(asarPath).map(p => p.replace(/^\/+/, ''));
-  const has = (rel) => list.includes(rel.replace(/^\/+/, ''));
+  // Normalisasi: listPackage memakai path.sep platform — di Windows backslash.
+  const norm = (p) => p.replace(/\\/g, '/').replace(/^\/+/, '');
+  const list = asar.listPackage(asarPath).map(norm);
+  const has = (rel) => list.includes(norm(rel));
+  // extractFile juga perlu separator platform — coba dua-duanya
+  const extract = (rel) => {
+    const n = norm(rel);
+    try { return asar.extractFile(asarPath, n); }
+    catch { return asar.extractFile(asarPath, n.replace(/\//g, path.sep)); }
+  };
   for (const rel of [
     '/dist/desktop/src/main.js',
     '/dist/desktop/src/preload.js',
@@ -81,7 +89,7 @@ function main() {
 
   console.log('\n[2] Path yang dimuat main.js benar-benar ada (regresi blank v1.1.0)');
   // Ambil source main.js dari dalam asar
-  const mainSrc = asar.extractFile(asarPath, 'dist/desktop/src/main.js').toString('utf8');
+  const mainSrc = extract('dist/desktop/src/main.js').toString('utf8');
   const usesAppRoot = /APP_ROOT\s*=\s*path\.join\(__dirname,\s*'\.\.',\s*'\.\.',\s*'\.\.'\)/.test(mainSrc);
   ok(usesAppRoot, 'main.js menghitung APP_ROOT 3-level dari __dirname');
   ok(mainSrc.includes("path.join(APP_ROOT, 'src/renderer/index.html')"),
@@ -110,7 +118,7 @@ function main() {
     'binary .node win32-x64 ada');
 
   console.log('\n[4] index.html mereferensikan aset yang benar');
-  const html = asar.extractFile(asarPath, 'src/renderer/index.html').toString('utf8');
+  const html = extract('src/renderer/index.html').toString('utf8');
   ok(html.includes('style.css') && html.includes('renderer.js'), 'index.html memuat style.css + renderer.js');
   // CSP tidak memblokir file lokal
   ok(!/script-src\s+'none'/.test(html), 'CSP tidak memblokir script lokal');
