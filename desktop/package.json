@@ -1,6 +1,6 @@
 {
   "name": "saatiril-desktop",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Saatiril Desktop — DSLR USB PTP tether untuk SAATIRIL (Electron). Sony PC Remote, Canon/Nikon PTP, Fujifilm Tether, plus mode demo tanpa kamera.",
   "main": "dist/desktop/src/main.js",
   "author": "SAATIRIL",
@@ -17,6 +17,7 @@
     "usb": "^2.14.0"
   },
   "devDependencies": {
+    "@electron/asar": "^4.3.2",
     "@types/node": "^26.6.6",
     "electron": "^38.0.0",
     "electron-builder": "^26.18.0",
@@ -42,8 +43,18 @@
     "win": {
       "icon": "build/icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -58,7 +69,12 @@
       "icon": "build/icon.png",
       "category": "Graphics",
       "target": [
-        { "target": "AppImage", "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "artifactName": "saatiril-linux.${ext}"
     },

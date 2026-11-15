@@ -17,6 +17,27 @@ import { NodeUsbBackend } from '../../electron-ptp/src/libusb-backend';
 import { MockUsbBackend, MockSonyDevice } from '../../electron-ptp/src/mock-backend';
 import { usbModeHint } from '../../electron-ptp/src/constants';
 
+// Akar aplikasi (berisi package.json): __dirname = <root>/dist/desktop/src,
+// sehingga root = tiga level ke atas. Path renderer & ikon SELALU relatif
+// ke root ini — benar baik saat dev (desktop/) maupun ter-package (asar).
+const APP_ROOT = path.join(__dirname, '..', '..', '..');
+const RENDERER_INDEX = path.join(APP_ROOT, 'src/renderer/index.html');
+const ICON_PATH = path.join(APP_ROOT, 'build/icon.png');
+
+// E2E hook: smoke CI menjalankan app ter-package dan menunggu string ini
+// di stdout renderer (lihat desktop/e2e-load-test.js). Tanpa ini, kegagalan
+// memuat renderer hanya berupa jendela kosong (blank) tanpa pesan.
+if (process.env.SAATIRIL_E2E) {
+  app.commandLine.appendSwitch('enable-logging');
+  app.commandLine.appendSwitch('log-level', '0');
+}
+
+// Beberapa mesin Windows dengan GPU Intel lama / driver USB tertentu gagal
+// merender isi jendela Electron 38 — software GL lebih lambat tapi pasti tampil.
+if (!process.env.SAATIRIL_KEEP_GPU) {
+  app.disableHardwareAcceleration();
+}
+
 let mainWindow: BrowserWindow | null = null;
 let engine: PtpEngine | null = null;
 let currentBackend: NodeUsbBackend | MockUsbBackend | null = null;
@@ -140,7 +161,7 @@ function createWindow(): void {
     minHeight: 640,
     backgroundColor: '#1a0b2e',
     title: 'Saatiril Desktop',
-    icon: path.join(__dirname, '../../build/icon.png'),
+    icon: fs.existsSync(ICON_PATH) ? ICON_PATH : undefined,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -149,8 +170,19 @@ function createWindow(): void {
       sandbox: false,
     },
   });
-  mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
+  mainWindow.loadFile(RENDERER_INDEX);
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  // Jangan per lagi "blank ungu" tanpa keterangan: bila renderer gagal
+  // dimuat (path salah, asar korup, dsb.) tampilkan dialog + log yang jelas.
+  mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
+    const msg = `Gagal memuat antarmuka (kode ${code}).
+  File : ${RENDERER_INDEX}
+  URL  : ${url}
+  Sebab: ${desc}`;
+    console.error('[saatiril] did-fail-load:', msg);
+    dialog.showErrorBox('Saatiril — Antarmuka gagal dimuat', msg);
+  });
 }
 
 app.whenReady().then(() => {

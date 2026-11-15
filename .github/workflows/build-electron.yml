@@ -19,8 +19,10 @@ jobs:
         include:
           - os: windows-latest
             targets: '--win nsis portable'
+            dirflag: '--win'
           - os: ubuntu-latest
             targets: '--linux AppImage'
+            dirflag: '--linux'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
@@ -54,6 +56,29 @@ jobs:
           # (npmRebuild:false sudah diset di package.json build config)
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder ${{ matrix.targets }} --publish never
+
+      - name: Verify package (regresi blank — path renderer di dalam asar)
+        working-directory: desktop
+        shell: bash
+        run: |
+          # --dir selalu tersedia untuk kedua OS (hasil package step di atas
+          # sudah dibuang ke dist-app/<os>-unpacked? tidak — target spesifik OS.
+          # Build --dir ringan untuk verifikasi asar:
+          npx electron-builder --dir ${{ matrix.dirflag }} --publish never
+          node verify-package.js
+
+      - name: E2E load test — app ter-package di X virtual (hanya Linux)
+        if: runner.os == 'Linux'
+        working-directory: desktop
+        run: |
+          # xvfb-run butuh xauth yang tidak ada di runner minimal — pakai Xvfb langsung
+          Xvfb :95 -screen 0 1280x800x24 -nolisten tcp &
+          XPID=$!
+          sleep 2
+          DISPLAY=:95 node e2e-load-test.js
+          RC=$?
+          kill $XPID 2>/dev/null || true
+          exit $RC
 
       - name: Collect artifacts
         working-directory: desktop

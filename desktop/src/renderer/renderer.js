@@ -5,6 +5,11 @@
 (function () {
   'use strict';
 
+  // Penanda e2e: dicetak ke console renderer begitu DOM siap.
+  // CI menjalankan aplikasi ter-package dan menganggap gagal bila string
+  // ini tidak muncul (renderer blank/error) — lihat desktop/e2e-load-test.js.
+  console.log('SAATIRIL_RENDERER_OK');
+
   var saatiril = window.saatiril;
 
   // ── Elemen ──
