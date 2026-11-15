@@ -35,7 +35,25 @@ function ok(cond, name, detail) {
 }
 
 function main() {
-  const appDir = process.argv[2] || path.join(__dirname, 'dist-app', 'linux-unpacked');
+  // Auto-detect folder unpacked (linux-unpacked / win-unpacked) — hasil step
+  // package electron-builder. Override: SAATIRIL_VERIFY_DIR / argv[2].
+  const distApp = path.join(__dirname, 'dist-app');
+  let appDir = process.argv[2] || process.env.SAATIRIL_VERIFY_DIR || '';
+  if (!appDir) {
+    if (!fs.existsSync(distApp)) {
+      console.error('Tidak ada dist-app/ — build dulu (npm run pack:dir / dist)');
+      process.exit(1);
+    }
+    const cand = fs.readdirSync(distApp)
+      .filter(d => d.endsWith('-unpacked'))
+      .map(d => path.join(distApp, d))
+      .filter(d => fs.existsSync(path.join(d, 'resources', 'app.asar')));
+    if (cand.length === 0) {
+      console.error('Tidak ada folder *-unpacked berisi resources/app.asar di dist-app/');
+      process.exit(1);
+    }
+    appDir = cand[0];
+  }
   const asarPath = path.join(appDir, 'resources', 'app.asar');
   console.log('app dir :', appDir);
 
