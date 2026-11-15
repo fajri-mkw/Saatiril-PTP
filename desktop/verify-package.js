@@ -95,21 +95,27 @@ function main() {
   ok(mainSrc.includes("path.join(APP_ROOT, 'src/renderer/index.html')"),
     'loadFile memakai APP_ROOT/src/renderer/index.html');
 
-  // Simulasi matematis runtime:
+  // Simulasi matematis runtime — string murni bergaya asar (selalu '/', tidak
+  // memakai path.join yang menghasilkan '\' di Windows):
   //   __dirname (di asar) = <asar>/dist/desktop/src
-  //   RENDERER_INDEX      = join(__dirname, '../../../src/renderer/index.html')
-  const asarRoot = '/app.asar'; // prefiks logis dalam asar
-  const dirname = asarRoot + '/dist/desktop/src';
-  const rendererIndex = path.join(dirname, '..', '..', '..', 'src/renderer/index.html');
-  const iconPath = path.join(dirname, '..', '..', '..', 'build/icon.png');
-  const relRenderer = rendererIndex.replace(asarRoot, '').replace(/^\/+/, '');
-  const relIcon = iconPath.replace(asarRoot, '').replace(/^\/+/, '');
-  ok(has('/' + relRenderer), 'loadFile → ' + relRenderer + ' ADA di asar', 'path kosong — renderer akan blank!');
-  ok(has('/' + relIcon), 'ikon → ' + relIcon + ' ada di asar');
-
-  // preload dimuat relatif __dirname — pastikan valid juga
-  const relPreload = path.join(dirname, 'preload.js').replace(asarRoot, '').replace(/^\/+/, '');
-  ok(has('/' + relPreload), 'preload → ' + relPreload + ' ada di asar');
+  //   RENDERER_INDEX      = <dirname>/../../../src/renderer/index.html
+  const dirname = 'dist/desktop/src';
+  const up3 = (rel) => rel.split('/'); // noop agar jelas
+  const joinPosix = (base, ...parts) => {
+    let stack = base.split('/');
+    for (const p of parts) {
+      if (p === '.') continue;
+      else if (p === '..') stack.pop();
+      else stack.push(p);
+    }
+    return stack.join('/');
+  };
+  const rendererIndex = joinPosix(dirname, '..', '..', '..', 'src/renderer/index.html');
+  const iconPath = joinPosix(dirname, '..', '..', '..', 'build/icon.png');
+  const preloadPath = joinPosix(dirname, 'preload.js');
+  ok(has(rendererIndex), 'loadFile → ' + rendererIndex + ' ADA di asar', 'path kosong — renderer akan blank!');
+  ok(has(iconPath), 'ikon → ' + iconPath + ' ada di asar');
+  ok(has(preloadPath), 'preload → ' + preloadPath + ' ada di asar');
 
   console.log('\n[3] Native module usb (prebuild NAPI)');
   ok(list.some(p => p.includes('node_modules/usb/prebuilds/linux-x64/')), 'prebuild usb linux-x64 ada');
